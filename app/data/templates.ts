@@ -1,0 +1,166 @@
+import type { Template } from '~/types/template'
+
+export const templates: Template[] = [
+  {
+    id: 'button',
+    name: 'Button',
+    category: 'basic',
+    content: `┌────────┐
+│ Button │
+└────────┘`,
+  },
+  {
+    id: 'text-input',
+    name: 'Text Input',
+    category: 'form',
+    content: `Label:
+┌──────────────────┐
+│                  │
+└──────────────────┘`,
+  },
+  {
+    id: 'checkbox',
+    name: 'Checkbox',
+    category: 'form',
+    content: `[x] Option A
+[ ] Option B
+[ ] Option C`,
+  },
+  {
+    id: 'radio',
+    name: 'Radio',
+    category: 'form',
+    content: `(o) Option A
+( ) Option B
+( ) Option C`,
+  },
+  {
+    id: 'card',
+    name: 'Card',
+    category: 'basic',
+    content: `┌──────────────────────┐
+│ Card Title           │
+├──────────────────────┤
+│                      │
+│ Card content goes    │
+│ here.                │
+│                      │
+└──────────────────────┘`,
+  },
+  {
+    id: 'modal',
+    name: 'Modal',
+    category: 'feedback',
+    content: `┌────────────────────────────┐
+│ Dialog Title          [x]  │
+├────────────────────────────┤
+│                            │
+│  Are you sure you want     │
+│  to continue?              │
+│                            │
+├────────────────────────────┤
+│        ┌────────┐ ┌──────┐ │
+│        │ Cancel │ │  OK  │ │
+│        └────────┘ └──────┘ │
+└────────────────────────────┘`,
+  },
+  {
+    id: 'table',
+    name: 'Table',
+    category: 'data',
+    content: `┌──────┬──────────┬────────┐
+│  ID  │  Name    │ Status │
+├──────┼──────────┼────────┤
+│  1   │  Alice   │ Active │
+│  2   │  Bob     │ Idle   │
+│  3   │  Carol   │ Active │
+└──────┴──────────┴────────┘`,
+  },
+  {
+    id: 'dropdown',
+    name: 'Dropdown',
+    category: 'form',
+    content: `┌──────────────────┐
+│ Select...      ▼ │
+├──────────────────┤
+│ Option A         │
+│ Option B         │
+│ Option C         │
+└──────────────────┘`,
+  },
+  {
+    id: 'tabs',
+    name: 'Tabs',
+    category: 'navigation',
+    content: `┌───────┬───────┬───────┐
+│ Tab 1 │ Tab 2 │ Tab 3 │
+├───────┘       └───────┤
+│                       │
+│  Tab content here     │
+│                       │
+└───────────────────────┘`,
+  },
+  {
+    id: 'navbar',
+    name: 'Navbar',
+    category: 'navigation',
+    content: `┌────────────────────────────────────────────┐
+│                                  ┌───────┐ │
+│ Logo   Home  About  Contact      │ Login │ │
+│                                  └───────┘ │
+└────────────────────────────────────────────┘`,
+  },
+  {
+    id: 'sidebar',
+    name: 'Sidebar',
+    category: 'layout',
+    content: `┌────────────┐
+│  Menu      │
+├────────────┤
+│ > Home     │
+│   About    │
+│   Settings │
+│   Profile  │
+│            │
+│   Logout   │
+└────────────┘`,
+  },
+  {
+    id: 'form',
+    name: 'Form',
+    category: 'form',
+    content: `┌──────────────────────────┐
+│  Registration Form       │
+├──────────────────────────┤
+│ Name:                    │
+│ ┌──────────────────────┐ │
+│ │                      │ │
+│ └──────────────────────┘ │
+│ Email:                   │
+│ ┌──────────────────────┐ │
+│ │                      │ │
+│ └──────────────────────┘ │
+│ Password:                │
+│ ┌──────────────────────┐ │
+│ │                      │ │
+│ └──────────────────────┘ │
+│ [x] I agree to terms     │
+│                          │
+│ ┌────────┐               │
+│ │ Submit │               │
+│ └────────┘               │
+└──────────────────────────┘`,
+  },
+  {
+    id: 'breadcrumb',
+    name: 'Breadcrumb',
+    category: 'navigation',
+    content: `Home > Section > Page`,
+  },
+  {
+    id: 'pagination',
+    name: 'Pagination',
+    category: 'navigation',
+    content: `< 1  2  3  ...  10 >`,
+  },
+]

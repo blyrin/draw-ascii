@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+
+    <path d="M6 7 H58 V55" stroke="#2d7fff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+    <path d="M6 7 V55 H46" stroke="#2d7fff" stroke-width="4" stroke-linecap="square" stroke-linejoin="miter"/>
+
+    <rect x="2" y="3" width="8" height="8" rx="0.5" fill="#2d7fff"/>
+    <rect x="54" y="3" width="8" height="8" rx="0.5" fill="#2d7fff"/>
+    <rect x="2" y="51" width="8" height="8" rx="0.5" fill="#2d7fff"/>
+
+    <rect x="48" y="49" width="4" height="13" rx="1" fill="#2d7fff" opacity="0.9"/>
+
+    <text x="19" y="36" font-family="monospace" font-size="22" font-weight="bold" fill="#2d7fff" letter-spacing="1">A_</text>
+</svg>
