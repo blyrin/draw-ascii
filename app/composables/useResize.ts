@@ -17,13 +17,13 @@ export function useResize(
   const originalRect = ref<CellRect | null>(null)
   const resizeAnchor = ref<{ row: number; col: number } | null>(null)
 
-  // --- analyzeSelection ---
-  function analyzeSelection(region: string[][], selRect: CellRect): BoxStructure | null {
+  // 识别选择区内是否存在完整框结构
+  function analyzeSelection(region: string[][]): BoxStructure | null {
     const h = region.length
     const w = region[0]?.length ?? 0
     if (h < 3 || w < 3) return null
 
-    // Scan entire region for the first ┌ (top-left corner)
+    // 查找第一个左上角，作为框结构起点
     let top = -1, left = -1, bottom = -1, right = -1
 
     outer_tl:
@@ -38,47 +38,45 @@ export function useResize(
       }
     if (top === -1) return null
 
-    // Scan for top-right corner ┐ on the same row first, then nearby rows
-    outer_tr:
-      for (let c = w - 1; c > left + 1; c--) {
-        if (region[top]![c] === '┐') {
-          right = c
-          break;
-        }
+    // 在同一行查找右上角
+    for (let c = w - 1; c > left + 1; c--) {
+      if (region[top]![c] === '┐') {
+        right = c
+        break
       }
+    }
     if (right === -1) return null
 
-    // Scan for bottom-left corner └ in same column first
-    outer_bl:
-      for (let r = h - 1; r > top + 1; r--) {
-        if (region[r]![left] === '└') {
-          bottom = r
-          break;
-        }
+    // 在同一列查找左下角
+    for (let r = h - 1; r > top + 1; r--) {
+      if (region[r]![left] === '└') {
+        bottom = r
+        break
       }
+    }
     if (bottom === -1) return null
 
-    // Verify bottom-right corner ┘
+    // 校验右下角
     if (region[bottom]![right] !== '┘') return null
 
-    // Validate top edge
+    // 校验上边
     for (let c = left + 1; c < right; c++) {
       if (!H_BORDER.has(region[top]![c]!)) return null
     }
-    // Validate bottom edge
+    // 校验下边
     for (let c = left + 1; c < right; c++) {
       if (!H_BORDER.has(region[bottom]![c]!)) return null
     }
-    // Validate left edge
+    // 校验左边
     for (let r = top + 1; r < bottom; r++) {
       if (!V_BORDER.has(region[r]![left]!)) return null
     }
-    // Validate right edge
+    // 校验右边
     for (let r = top + 1; r < bottom; r++) {
       if (!V_BORDER.has(region[r]![right]!)) return null
     }
 
-    // Scan horizontal dividers (├──┤)
+    // 扫描横向分隔线
     const hDividers: number[] = []
     for (let r = top + 1; r < bottom; r++) {
       if (region[r]![left] === '├' && region[r]![right] === '┤') {
@@ -93,7 +91,7 @@ export function useResize(
       }
     }
 
-    // Scan vertical dividers (┬│┴)
+    // 扫描纵向分隔线
     const vDividers: number[] = []
     for (let c = left + 1; c < right; c++) {
       if (region[top]![c] === '┬' && region[bottom]![c] === '┴') {
@@ -108,7 +106,7 @@ export function useResize(
       }
     }
 
-    // Extract interior content by sections
+    // 按分隔线提取每个区域里的内容
     const hBounds = [top, ...hDividers, bottom]
     const vBounds = [left, ...vDividers, right]
     const interiorContent: string[][][] = []
@@ -132,7 +130,7 @@ export function useResize(
     return { top, left, bottom, right, hDividers, vDividers, interiorContent }
   }
 
-  // --- rebuildBox ---
+  // 按新的选择区域重建框结构
   function rebuildBox(box: BoxStructure, newRect: CellRect): { row: number; col: number; char: string }[] {
     const cells: { row: number; col: number; char: string }[] = []
     const r0 = newRect.startRow
@@ -144,7 +142,7 @@ export function useResize(
 
     if (newH < 2 || newW < 2) return cells
 
-    // Compute new divider positions
+    // 按原比例计算分隔线的新位置
     const newHDividers: number[] = box.hDividers.map(origR => {
       const rel = origR - box.top
       return Math.max(1, Math.min(newH - 1, Math.round(rel / oldH * newH)))
@@ -158,14 +156,14 @@ export function useResize(
     const hDivSet = new Set(newHDividers)
     const vDivSet = new Set(newVDividers)
 
-    // Fill interior with spaces first
+    // 先用空格清理新区域
     for (let r = 0; r <= newH; r++) {
       for (let c = 0; c <= newW; c++) {
         cells.push({ row: r0 + r, col: c0 + c, char: ' ' })
       }
     }
 
-    // Draw outer border
+    // 绘制外边框
     cells.push({ row: r0, col: c0, char: '┌' })
     cells.push({ row: r0, col: c0 + newW, char: '┐' })
     cells.push({ row: r0 + newH, col: c0, char: '└' })
@@ -189,7 +187,7 @@ export function useResize(
       cells.push({ row: r0 + r, col: c0 + newW, char: ch })
     }
 
-    // Draw horizontal dividers
+    // 绘制横向分隔线
     for (const hr of newHDividers) {
       for (let c = 1; c < newW; c++) {
         let ch = '─'
@@ -198,15 +196,15 @@ export function useResize(
       }
     }
 
-    // Draw vertical dividers
+    // 绘制纵向分隔线
     for (const vc of newVDividers) {
       for (let r = 1; r < newH; r++) {
-        if (hDivSet.has(r)) continue // already handled as ┼
+        if (hDivSet.has(r)) continue // 交叉点已由横向分隔线处理
         cells.push({ row: r0 + r, col: c0 + vc, char: '│' })
       }
     }
 
-    // Place interior content
+    // 放回原有内容，超出新区域的部分会被截断
     const hBounds = [0, ...newHDividers, newH]
     const vBounds = [0, ...newVDividers, newW]
 
@@ -229,26 +227,26 @@ export function useResize(
     return cells
   }
 
-  // --- hitTestHandle ---
+  // 判断鼠标是否命中缩放控制点
   function hitTestHandle(row: number, col: number, selRect: CellRect): ResizeHandle | null {
     const { startRow: r0, startCol: c0, endRow: r1, endCol: c1 } = selRect
 
-    // Allow 1-cell tolerance around edges for easier grabbing
+    // 边缘周围保留 1 格容差，便于鼠标命中
     const nearTop = row >= r0 - 1 && row <= r0 + 1
     const nearBottom = row >= r1 - 1 && row <= r1 + 1
     const nearLeft = col >= c0 - 1 && col <= c0 + 1
     const nearRight = col >= c1 - 1 && col <= c1 + 1
 
-    // Must be near at least one edge
+    // 必须靠近至少一条边
     if (!nearTop && !nearBottom && !nearLeft && !nearRight) return null
 
-    // Corner handles (priority)
+    // 角控制点优先
     if (nearTop && nearLeft) return 'top-left'
     if (nearTop && nearRight) return 'top-right'
     if (nearBottom && nearLeft) return 'bottom-left'
     if (nearBottom && nearRight) return 'bottom-right'
 
-    // Edge handles
+    // 边控制点
     if (nearTop && col >= c0 && col <= c1) return 'top'
     if (nearBottom && col >= c0 && col <= c1) return 'bottom'
     if (nearLeft && row >= r0 && row <= r1) return 'left'
@@ -257,23 +255,23 @@ export function useResize(
     return null
   }
 
-  // --- Minimum size constraints ---
+  // 根据分隔线数量计算框的最小尺寸
   function getMinSize(box: BoxStructure): { minH: number; minW: number } {
     const nh = box.hDividers.length
     const nv = box.vDividers.length
     return {
-      minH: nh === 0 ? 3 : nh + 2 + nh,
-      minW: nv === 0 ? 3 : nv + 2 + nv,
+      minH: nh === 0 ? 3 : nh * 2 + 3,
+      minW: nv === 0 ? 3 : nv * 2 + 3,
     }
   }
 
-  // --- startResize ---
+  // 开始缩放并记录固定锚点
   function startResize(handle: ResizeHandle, selRect: CellRect) {
     isResizing.value = true
     activeHandle.value = handle
     originalRect.value = { ...selRect }
 
-    // Anchor is the opposite corner/edge
+    // 锚点取当前控制点的对侧边或对角
     const { startRow: r0, startCol: c0, endRow: r1, endCol: c1 } = selRect
     switch (handle) {
       case 'top-left':
@@ -303,7 +301,7 @@ export function useResize(
     }
   }
 
-  // --- updateResize ---
+  // 根据鼠标位置更新缩放预览
   function updateResize(row: number, col: number, selRect: CellRect): CellRect {
     if (!activeHandle.value || !originalRect.value || !detectedBox.value || !resizeAnchor.value) return selRect
 
@@ -314,7 +312,7 @@ export function useResize(
     let r0 = selRect.startRow, c0 = selRect.startCol
     let r1 = selRect.endRow, c1 = selRect.endCol
 
-    // Update edges based on handle
+    // 根据控制点更新对应边
     if (handle.includes('top')) r0 = Math.min(row, anchor.row - minH + 1)
     if (handle.includes('bottom')) r1 = Math.max(row, anchor.row + minH - 1)
     if (handle === 'top') {
@@ -340,7 +338,7 @@ export function useResize(
     if (handle.includes('left') && handle !== 'left') c0 = Math.min(col, anchor.col - minW + 1)
     if (handle.includes('right') && handle !== 'right') c1 = Math.max(col, anchor.col + minW - 1)
 
-    // Enforce minimum size
+    // 保证缩放后仍能容纳边框和分隔线
     if (r1 - r0 + 1 < minH) {
       if (handle.includes('top')) {
         r0 = r1 - minH + 1
@@ -356,19 +354,19 @@ export function useResize(
       }
     }
 
-    // Clamp to non-negative
+    // 画布坐标不能小于 0
     r0 = Math.max(0, r0)
     c0 = Math.max(0, c0)
 
     const newRect: CellRect = { startRow: r0, startCol: c0, endRow: r1, endCol: c1 }
 
-    // Generate preview
+    // 生成当前缩放预览
     resizePreview.value = rebuildBox(detectedBox.value, newRect)
 
     return newRect
   }
 
-  // --- commitResize ---
+  // 提交缩放结果并刷新框结构
   function commitResize(newRect: CellRect) {
     if (!detectedBox.value || !originalRect.value) {
       cancelResize()
@@ -377,18 +375,21 @@ export function useResize(
 
     history.pushSnapshot()
 
-    // Clear original area
+    // 清理原区域
     const orig = originalRect.value
     canvas.clearRegion(orig.startRow, orig.startCol, orig.endRow, orig.endCol)
 
-    // Write new content
+    // 写入新区域
     const cells = rebuildBox(detectedBox.value, newRect)
     canvas.setCells(cells)
+
+    const region = canvas.getRegion(newRect.startRow, newRect.startCol, newRect.endRow, newRect.endCol)
+    detectedBox.value = analyzeSelection(region)
 
     cancelResize()
   }
 
-  // --- cancelResize ---
+  // 取消当前缩放过程
   function cancelResize() {
     isResizing.value = false
     activeHandle.value = null
@@ -397,7 +398,7 @@ export function useResize(
     resizeAnchor.value = null
   }
 
-  // --- getCursorForHandle ---
+  // 根据控制点类型返回对应鼠标样式
   function getCursorForHandle(handle: ResizeHandle): string {
     switch (handle) {
       case 'top-left':

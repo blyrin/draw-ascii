@@ -30,6 +30,8 @@ const lineStyles: { id: LineStyle; label: string }[] = [
   { id: 'arrow-end', label: '单箭头 ──→' },
   { id: 'arrow-both', label: '双箭头 ←─→' },
 ]
+
+const lineStyleItems = lineStyles.map(style => ({ label: style.label, value: style.id }))
 </script>
 
 <template>
@@ -40,7 +42,7 @@ const lineStyles: { id: LineStyle; label: string }[] = [
 
     <div class="flex-1" />
 
-    <!-- Tool buttons -->
+    <!-- 工具按钮 -->
     <UTooltip v-for="tool in tools" :key="tool.id" :text="`${tool.label} (${tool.shortcut})`">
       <UButton
         :color="activeTool === tool.id ? 'primary' : 'neutral'"
@@ -51,11 +53,11 @@ const lineStyles: { id: LineStyle; label: string }[] = [
       />
     </UTooltip>
 
-    <!-- Line style (only when line tool active) -->
+    <!-- 线条样式仅在线条工具下可选 -->
     <USeparator class="h-6 mx-1" orientation="vertical" />
     <USelect
       :disabled="activeTool !== 'line'"
-      :items="lineStyles.map((s: any) => ({ label: s.label, value: s.id }))"
+      :items="lineStyleItems"
       :model-value="lineStyle"
       class="w-36 font-mono line-select"
       size="sm"
@@ -66,7 +68,7 @@ const lineStyles: { id: LineStyle; label: string }[] = [
 
     <USeparator class="h-6 mx-1" orientation="vertical" />
 
-    <!-- Undo / Redo -->
+    <!-- 撤销和重做 -->
     <UTooltip text="撤销 (Ctrl+Z)">
       <UButton :disabled="!canUndo" color="neutral" icon="i-lucide-undo-2" size="sm" variant="ghost"
                @click="emit('undo')" />
@@ -78,7 +80,7 @@ const lineStyles: { id: LineStyle; label: string }[] = [
 
     <USeparator class="h-6 mx-1" orientation="vertical" />
 
-    <!-- Clear & Export -->
+    <!-- 清空和导出 -->
     <UTooltip text="清空画布">
       <UButton color="neutral" icon="i-lucide-trash-2" size="sm" variant="ghost" @click="emit('clear')" />
     </UTooltip>

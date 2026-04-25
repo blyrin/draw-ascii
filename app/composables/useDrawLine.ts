@@ -1,11 +1,13 @@
 import type { LineStyle } from '~/types/canvas'
 
+type Direction = 'left' | 'right' | 'up' | 'down'
+
 const BOX_CHARS = new Set('┌┐└┘─│┼├┤┬┴')
 
-function getConnector(existing: string, direction: 'left' | 'right' | 'up' | 'down'): string | null {
+function getConnector(existing: string, directions: Direction | Direction[]): string | null {
   if (!BOX_CHARS.has(existing)) return null
 
-  const connections: Record<string, Set<string>> = {
+  const connections: Record<string, Set<Direction>> = {
     '─': new Set(['left', 'right']),
     '│': new Set(['up', 'down']),
     '┌': new Set(['right', 'down']),
@@ -23,9 +25,12 @@ function getConnector(existing: string, direction: 'left' | 'right' | 'up' | 'do
   if (!dirs) return null
 
   const newDirs = new Set(dirs)
-  newDirs.add(direction)
+  const dirsToAdd = Array.isArray(directions) ? directions : [directions]
+  for (const direction of dirsToAdd) {
+    newDirs.add(direction)
+  }
 
-  // Find matching character
+  // 根据连接方向找到最接近的框线字符
   for (const [char, charDirs] of Object.entries(connections)) {
     if (charDirs.size === newDirs.size && [...newDirs].every(d => charDirs.has(d))) {
       return char
@@ -55,8 +60,8 @@ export function useDrawLine(
       const step = dx > 0 ? 1 : -1
       for (let c = startCol; c !== endCol + step; c += step) {
         const existing = canvas.getCell(startRow, c)
-        const dir1 = step > 0 ? 'right' : 'left'
-        const dir2 = step > 0 ? 'left' : 'right'
+        const dir1: Direction = step > 0 ? 'right' : 'left'
+        const dir2: Direction = step > 0 ? 'left' : 'right'
         let char = '─'
 
         if (c === endCol && style === 'arrow-end') {
@@ -66,13 +71,9 @@ export function useDrawLine(
         } else if (c === endCol && style === 'arrow-both') {
           char = step > 0 ? '→' : '←'
         } else {
-          const connector = getConnector(existing, c === startCol ? dir1 : c === endCol ? dir2 : dir1)
-          if (connector && c !== startCol && c !== endCol) {
-            char = connector
-          } else if (BOX_CHARS.has(existing)) {
-            const conn = getConnector(existing, c === startCol ? dir1 : dir2)
-            if (conn) char = conn
-          }
+          const lineDirs = c === startCol ? dir1 : c === endCol ? dir2 : [dir1, dir2]
+          const connector = getConnector(existing, lineDirs)
+          if (connector) char = connector
         }
 
         points.push({ row: startRow, col: c, char })
@@ -81,8 +82,8 @@ export function useDrawLine(
       const step = dy > 0 ? 1 : -1
       for (let r = startRow; r !== endRow + step; r += step) {
         const existing = canvas.getCell(r, startCol)
-        const dir1 = step > 0 ? 'down' : 'up'
-        const dir2 = step > 0 ? 'up' : 'down'
+        const dir1: Direction = step > 0 ? 'down' : 'up'
+        const dir2: Direction = step > 0 ? 'up' : 'down'
         let char = '│'
 
         if (r === endRow && style === 'arrow-end') {
@@ -92,13 +93,9 @@ export function useDrawLine(
         } else if (r === endRow && style === 'arrow-both') {
           char = step > 0 ? '↓' : '↑'
         } else {
-          const connector = getConnector(existing, r === startRow ? dir1 : r === endRow ? dir2 : dir1)
-          if (connector && r !== startRow && r !== endRow) {
-            char = connector
-          } else if (BOX_CHARS.has(existing)) {
-            const conn = getConnector(existing, r === startRow ? dir1 : dir2)
-            if (conn) char = conn
-          }
+          const lineDirs = r === startRow ? dir1 : r === endRow ? dir2 : [dir1, dir2]
+          const connector = getConnector(existing, lineDirs)
+          if (connector) char = connector
         }
 
         points.push({ row: r, col: startCol, char })

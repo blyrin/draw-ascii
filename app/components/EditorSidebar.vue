@@ -20,7 +20,7 @@ const emit = defineEmits<{
       模板
     </div>
 
-    <!-- Category filter -->
+    <!-- 分类筛选 -->
     <div class="flex flex-wrap gap-1 px-2 py-2 border-b border-default">
       <UButton
         :color="activeCategory === null ? 'primary' : 'neutral'"
@@ -42,7 +42,7 @@ const emit = defineEmits<{
       </UButton>
     </div>
 
-    <!-- Template list -->
+    <!-- 模板列表 -->
     <div class="flex-1 overflow-y-auto">
       <button
         v-for="tpl in templates"

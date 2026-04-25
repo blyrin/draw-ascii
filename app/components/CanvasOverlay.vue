@@ -28,7 +28,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="canvas-overlay">
-    <!-- Preview cells (drawing in progress) -->
+    <!-- 绘制中的预览单元格 -->
     <div
       v-for="(cell, i) in previewCells"
       :key="'p' + i"
@@ -43,7 +43,7 @@ onBeforeUnmount(() => {
     >{{ cell.char }}
     </div>
 
-    <!-- Template placing preview -->
+    <!-- 模板放置预览 -->
     <template v-if="placingPreview">
       <div
         v-for="(row, ri) in placingPreview.data"
@@ -59,7 +59,7 @@ onBeforeUnmount(() => {
       </div>
     </template>
 
-    <!-- Selection highlight -->
+    <!-- 选择区高亮 -->
     <div
       v-if="selection"
       :style="{
@@ -71,7 +71,7 @@ onBeforeUnmount(() => {
       class="selection-rect"
     />
 
-    <!-- Resize handles -->
+    <!-- 缩放控制点 -->
     <div
       v-for="(h, i) in resizeHandles"
       :key="'rh' + i"
@@ -84,7 +84,7 @@ onBeforeUnmount(() => {
       class="resize-handle"
     />
 
-    <!-- Resize preview -->
+    <!-- 缩放预览 -->
     <div
       v-for="(cell, i) in resizePreview"
       :key="'rp' + i"
@@ -99,7 +99,7 @@ onBeforeUnmount(() => {
     >{{ cell.char }}
     </div>
 
-    <!-- Text cursor -->
+    <!-- 文本光标 -->
     <div
       v-if="cursorPos && cursorVisible"
       :style="{

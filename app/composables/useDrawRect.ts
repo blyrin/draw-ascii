@@ -13,19 +13,19 @@ export function useDrawRect(
     history.pushSnapshot()
     const changes: { row: number; col: number; char: string }[] = []
 
-    // Corners
+    // 绘制四个角
     changes.push({ row: r0, col: c0, char: '┌' })
     changes.push({ row: r0, col: c1, char: '┐' })
     changes.push({ row: r1, col: c0, char: '└' })
     changes.push({ row: r1, col: c1, char: '┘' })
 
-    // Top and bottom edges
+    // 绘制上下边
     for (let c = c0 + 1; c < c1; c++) {
       changes.push({ row: r0, col: c, char: '─' })
       changes.push({ row: r1, col: c, char: '─' })
     }
 
-    // Left and right edges
+    // 绘制左右边
     for (let r = r0 + 1; r < r1; r++) {
       changes.push({ row: r, col: c0, char: '│' })
       changes.push({ row: r, col: c1, char: '│' })
@@ -35,8 +35,8 @@ export function useDrawRect(
   }
 
   function previewRect(startRow: number, startCol: number, endRow: number, endCol: number): {
-    row: number;
-    col: number;
+    row: number
+    col: number
     char: string
   }[] {
     const r0 = Math.min(startRow, endRow)

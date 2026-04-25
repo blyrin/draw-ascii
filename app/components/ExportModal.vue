@@ -11,7 +11,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <UModal :open="true" description="预览并导出 ASCII 内容" title="导出 ASCII" @close="emit('close')">
+  <UModal :open="true" title="导出 ASCII" @update:open="!$event && emit('close')">
 
     <template #body>
       <pre

@@ -26,7 +26,7 @@ export function useExport(canvas: ReturnType<typeof import('./useCanvas').useCan
       lines.push(line.trimEnd())
     }
 
-    // Remove trailing empty lines
+    // 去掉末尾空行，避免导出内容多出无意义空白
     while (lines.length > 0 && lines[lines.length - 1] === '') {
       lines.pop()
     }

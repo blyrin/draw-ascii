@@ -2,14 +2,14 @@
 import type { CellPos, ResizeHandle, ToolType } from '~/types/canvas'
 import type { Template } from '~/types/template'
 
-// Core composables
+// 画布基础逻辑
 const canvas = useCanvas()
 const tool = useTool()
 const history = useHistory(canvas)
 const exportUtil = useExport(canvas)
 const templates = useTemplates()
 
-// Drawing tools
+// 绘图工具逻辑
 const drawRect = useDrawRect(canvas, history)
 const drawLine = useDrawLine(canvas, history)
 const textCursor = useTextCursor(canvas, history)
@@ -17,19 +17,19 @@ const erase = useErase(canvas, history)
 const selection = useSelection(canvas, history)
 const resize = useResize(canvas, history)
 
-// Viewport
+// 视口状态
 const canvasEl = ref<HTMLElement | null>(null)
 const viewport = useViewport(canvasEl)
 const drag = useDrag(canvasEl, viewport)
 
-// UI state
+// 界面状态
 const showExport = ref(false)
 const exportText = ref('')
 const hoverPos = ref<CellPos | null>(null)
 const previewCells = ref<{ row: number; col: number; char: string }[]>([])
 const placingPreview = ref<{ data: string[][]; row: number; col: number } | null>(null)
 
-// Grid background
+// 网格背景尺寸跟随字符尺寸变化
 const gridStyle = computed(() => ({
   backgroundSize: `${viewport.cellWidth.value}px ${viewport.cellHeight.value}px`,
   backgroundImage: `linear-gradient(to right, var(--ui-border-muted) 1px, transparent 1px), linear-gradient(to bottom, var(--ui-border-muted) 1px, transparent 1px)`,
@@ -37,12 +37,12 @@ const gridStyle = computed(() => ({
   height: canvas.state.height * viewport.cellHeight.value + 'px',
 }))
 
-// Cursor style
+// 根据当前操作显示鼠标样式
 const cursorClass = computed(() => {
   if (resize.isResizing.value && resize.activeHandle.value) {
     return resize.getCursorForHandle(resize.activeHandle.value)
   }
-  // Show resize cursor on hover over handles
+  // 悬停在缩放控制点附近时显示缩放光标
   const t = tool.activeTool.value
   if (t === 'select' && selection.selection.value && resize.detectedBox.value && hoverPos.value) {
     const handle = resize.hitTestHandle(hoverPos.value.row, hoverPos.value.col, selection.selection.value)
@@ -54,7 +54,7 @@ const cursorClass = computed(() => {
   return 'cursor-crosshair'
 })
 
-// Resize handles computed from selection
+// 根据当前选择区域生成缩放控制点
 const resizeHandles = computed(() => {
   const sel = selection.selection.value
   if (!sel || tool.activeTool.value !== 'select' || !resize.detectedBox.value) return null
@@ -72,8 +72,7 @@ const resizeHandles = computed(() => {
   ]
 })
 
-// --- Event handlers ---
-
+// 切换工具时清理当前临时操作，避免不同工具状态互相影响
 function onToolChange(t: ToolType) {
   textCursor.deactivate()
   selection.clearSelection()
@@ -107,18 +106,21 @@ function onTemplateSelect(tpl: Template) {
 }
 
 function onCanvasMouseDown(e: MouseEvent) {
-  drag.onMouseDown(e)
+  if (e.button !== 0) return
+
   const pos = drag.pixelToCell(e.clientX, e.clientY)
   if (!pos) return
 
   const t = tool.activeTool.value
 
-  // Template placing
+  // 放置模板时不进入拖拽流程，避免鼠标抬起后生成多余选择区
   if (templates.placingTemplate.value && templates.placingData.value) {
     templates.placeTemplate(canvas, history, pos.row, pos.col)
     placingPreview.value = null
     return
   }
+
+  drag.onMouseDown(e)
 
   if (t === 'text') {
     textCursor.activate(pos.row, pos.col)
@@ -132,7 +134,7 @@ function onCanvasMouseDown(e: MouseEvent) {
   }
 
   if (t === 'select') {
-    // Check resize handle hit
+    // 优先命中缩放控制点
     if (selection.selection.value && resize.detectedBox.value) {
       const handle = resize.hitTestHandle(pos.row, pos.col, selection.selection.value)
       if (handle) {
@@ -156,7 +158,7 @@ function onCanvasMouseMove(e: MouseEvent) {
 
   drag.onMouseMove(e)
 
-  // Template placing preview
+  // 模板预览跟随鼠标所在单元格
   if (templates.placingData.value && pos) {
     placingPreview.value = { data: templates.placingData.value, row: pos.row, col: pos.col }
   }
@@ -214,13 +216,13 @@ function onCanvasMouseUp(e: MouseEvent) {
     } else if (selection.isMoving.value) {
       selection.endMove()
     } else {
-      // After selection drag ends, analyze for box structure
+      // 选择完成后识别可缩放的框结构
       if (selection.selection.value) {
         const sel = selection.selection.value
         const region = canvas.getRegion(sel.startRow, sel.startCol, sel.endRow, sel.endCol)
-        const box = resize.analyzeSelection(region, sel)
+        const box = resize.analyzeSelection(region)
         resize.detectedBox.value = box
-        // Snap selection to actual box boundaries so handles align correctly
+        // 将选择区吸附到实际边框，保证控制点贴合边缘
         if (box) {
           selection.setSelection(
             sel.startRow + box.top,
@@ -228,10 +230,10 @@ function onCanvasMouseUp(e: MouseEvent) {
             sel.startRow + box.bottom,
             sel.startCol + box.right,
           )
-          // Re-analyze with snapped selection so box offsets are 0-based
+          // 重新识别吸附后的区域，让边框偏移从 0 开始
           const snappedSel = selection.selection.value!
           const snappedRegion = canvas.getRegion(snappedSel.startRow, snappedSel.startCol, snappedSel.endRow, snappedSel.endCol)
-          resize.detectedBox.value = resize.analyzeSelection(snappedRegion, snappedSel)
+          resize.detectedBox.value = resize.analyzeSelection(snappedRegion)
         }
       }
     }
@@ -240,9 +242,9 @@ function onCanvasMouseUp(e: MouseEvent) {
   drag.onMouseUp(e)
 }
 
-// Keyboard shortcuts
+// 处理全局键盘快捷键
 function onKeyDown(e: KeyboardEvent) {
-  // Text cursor handles its own keys
+  // 文本光标优先处理输入类按键
   if (textCursor.isActive.value) {
     if (textCursor.handleKey(e)) {
       e.preventDefault()
@@ -250,7 +252,7 @@ function onKeyDown(e: KeyboardEvent) {
     }
   }
 
-  // Ctrl shortcuts
+  // 复制、剪切和撤销重做快捷键
   if (e.ctrlKey || e.metaKey) {
     if (e.key === 'z') {
       e.preventDefault()
@@ -263,17 +265,21 @@ function onKeyDown(e: KeyboardEvent) {
       return
     }
     if (e.key === 'c') {
+      if (!selection.selection.value) return
+      e.preventDefault()
       selection.copySelection()
       return
     }
     if (e.key === 'x') {
+      if (!selection.selection.value) return
+      e.preventDefault()
       selection.copySelection()
       selection.deleteSelection()
       return
     }
   }
 
-  // Delete selection
+  // 删除当前选择区
   if (e.key === 'Delete' || e.key === 'Backspace') {
     if (selection.selection.value) {
       e.preventDefault()
@@ -282,7 +288,7 @@ function onKeyDown(e: KeyboardEvent) {
     }
   }
 
-  // Escape
+  // 退出当前临时操作
   if (e.key === 'Escape') {
     if (resize.isResizing.value) {
       resize.cancelResize()
@@ -296,7 +302,7 @@ function onKeyDown(e: KeyboardEvent) {
     return
   }
 
-  // Tool shortcuts
+  // 工具快捷键
   if (!e.ctrlKey && !e.metaKey && !e.altKey) {
     const shortcuts: Record<string, ToolType> = { v: 'select', r: 'rectangle', l: 'line', t: 'text', e: 'erase' }
     const t = shortcuts[e.key.toLowerCase()]
@@ -318,7 +324,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="flex flex-col h-full">
-    <!-- Toolbar -->
+    <!-- 工具栏 -->
     <EditorToolbar
       :active-tool="tool.activeTool.value"
       :can-redo="history.canRedo.value"
@@ -333,7 +339,7 @@ onBeforeUnmount(() => {
     />
 
     <div class="flex flex-1 overflow-hidden">
-      <!-- Sidebar -->
+      <!-- 侧边栏 -->
       <EditorSidebar
         :active-category="templates.activeCategory.value"
         :categories="templates.categories.value"
@@ -342,7 +348,7 @@ onBeforeUnmount(() => {
         @update:active-category="templates.activeCategory.value = $event"
       />
 
-      <!-- Canvas area -->
+      <!-- 画布区域 -->
       <div
         ref="canvasEl"
         :class="cursorClass"
@@ -376,7 +382,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Status bar -->
+    <!-- 状态栏 -->
     <EditorStatusBar
       :active-tool="tool.activeTool.value"
       :canvas-height="canvas.state.height"
@@ -384,7 +390,7 @@ onBeforeUnmount(() => {
       :cursor-pos="hoverPos"
     />
 
-    <!-- Export modal -->
+    <!-- 导出弹窗 -->
     <ExportModal
       v-if="showExport"
       :text="exportText"

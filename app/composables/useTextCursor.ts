@@ -73,7 +73,7 @@ export function useTextCursor(
       return true
     }
 
-    // Printable character
+    // 输入普通字符并向右移动光标
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       ensureSnapshot()
       canvas.setCell(cursorPos.value.row, cursorPos.value.col, e.key)

@@ -1,13 +1,15 @@
-// https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-01-15',
+  sourcemap: false,
+  experimental: {
+    payloadExtraction: true,
+  },
   devtools: {
     enabled: false,
   },
   modules: [
     '@nuxt/ui',
   ],
-  ssr: false,
   app: {
     head: {
       htmlAttrs: { lang: 'zh-CN' },
